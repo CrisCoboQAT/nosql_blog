@@ -1,0 +1,241 @@
+CREATE TABLE usuarios
+(
+  user_id serial NOT NULL,
+  nome character varying(100) NOT NULL,
+  email character varying(100) NOT NULL,
+  senha character varying(50) NOT NULL,
+  CONSTRAINT user_id_pk PRIMARY KEY (user_id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE usuarios
+  OWNER TO postgres;
+
+CREATE TABLE historico_de_senhas
+(
+  senha character varying(50) NOT NULL,
+  user_id integer NOT NULL,
+  data timestamp without time zone NOT NULL,
+  CONSTRAINT senha_pk PRIMARY KEY (senha, user_id),
+  CONSTRAINT usuarios_historico_de_senhas_fk FOREIGN KEY (user_id)
+      REFERENCES usuarios (user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE historico_de_senhas
+  OWNER TO postgres;
+
+CREATE TABLE comentarios
+(
+  coment_id serial NOT NULL,
+  nome character varying(100) NOT NULL,
+  comentario character varying(300) NOT NULL,
+  data timestamp without time zone NOT NULL,
+  email character varying(100) NOT NULL,
+  CONSTRAINT comentario_id_pk PRIMARY KEY (coment_id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE comentarios
+  OWNER TO postgres;
+  
+CREATE TABLE postagens
+(
+  post_id serial NOT NULL,
+  user_id integer NOT NULL,
+  titulo character varying(50) NOT NULL,
+  conteudo character varying(800) NOT NULL,
+  data timestamp without time zone NOT NULL,
+  CONSTRAINT post_id_pk PRIMARY KEY (post_id),
+  CONSTRAINT usuarios_postagens_fk FOREIGN KEY (user_id)
+      REFERENCES usuarios (user_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE postagens
+  OWNER TO postgres;
+
+CREATE TABLE tags
+(
+  tag_id serial NOT NULL,
+  nome character varying(50) NOT NULL,
+  CONSTRAINT tag_id_pk PRIMARY KEY (tag_id)
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE tags
+  OWNER TO postgres;
+  
+CREATE TABLE post_coments
+(
+  post_id integer NOT NULL,
+  coment_id integer NOT NULL,
+  CONSTRAINT post_coment_pk PRIMARY KEY (post_id, coment_id),
+  CONSTRAINT comentarios_post_coments_fk FOREIGN KEY (coment_id)
+      REFERENCES comentarios (coment_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT postagens_post_coments_fk FOREIGN KEY (post_id)
+      REFERENCES postagens (post_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE post_coments
+  OWNER TO postgres;
+  
+CREATE TABLE post_tags
+(
+  post_id integer NOT NULL,
+  tag_id integer NOT NULL,
+  CONSTRAINT post_tag_pk PRIMARY KEY (post_id, tag_id),
+  CONSTRAINT postagens_post_tags_fk FOREIGN KEY (post_id)
+      REFERENCES postagens (post_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT tags_post_tags_fk FOREIGN KEY (tag_id)
+      REFERENCES tags (tag_id) MATCH SIMPLE
+      ON UPDATE NO ACTION ON DELETE NO ACTION
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE post_tags
+  OWNER TO postgres;
+  
+  
+-----------------------------------------------------------------------------
+  
+
+CREATE OR REPLACE FUNCTION insere_dados()
+  RETURNS void AS
+$$
+DECLARE
+    i integer;
+	j integer;
+    autorId integer;
+	postId integer;
+	
+BEGIN
+
+	i := 0;
+	
+	RAISE INFO 'Inserindo % comentarios.',10;
+	
+	LOOP
+        i := i + 1;
+	EXIT WHEN i = 11;
+
+		INSERT INTO comentarios (coment_id
+				,nome
+				,comentario
+				,data
+				,email
+				)
+		VALUES (i
+		    ,'autor comentario ' || i
+			,'conteudo comentario ' || i
+			,CURRENT_TIMESTAMP
+			,'autor_comentario' || i || '@email.com'
+			);
+
+	END LOOP;
+	
+	i := 0;
+	
+	RAISE INFO 'Inserindo % tags.',3;
+	
+	LOOP
+        i := i + 1;
+	EXIT WHEN i = 4;
+
+		INSERT INTO tags (tag_id
+				,nome
+				)
+		VALUES (i
+		    ,'tag test' || i
+			);
+
+	END LOOP;
+
+	RAISE INFO 'Inserindo % usuario.',1;
+	
+	INSERT INTO usuarios(nome
+			,email
+			,senha
+			)
+	VALUES ('maquina'
+		,'maquina@email.com'
+		,'ET8UP2g/MjlechFSJz8/,884650965'
+		) RETURNING user_id INTO autorId;
+		
+	INSERT INTO historico_de_senhas(senha
+			,user_id
+			,data
+			)
+	VALUES ('ET8UP2g/MjlechFSJz8/,884650965'
+		,autorId
+		,CURRENT_TIMESTAMP
+		);
+
+	i := 0;
+
+	RAISE INFO 'Inserindo % postagens.',1000;
+	
+	LOOP
+        i := i + 1;
+	EXIT WHEN i = 10001;
+	
+		INSERT INTO postagens(user_id
+			,titulo
+			,conteudo
+			,data
+			)
+		VALUES (autorId
+			,'titulo' || i
+			,i || ' postagem: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+			,CURRENT_TIMESTAMP) RETURNING post_id INTO postId;
+			
+		j := 0;
+		
+		LOOP
+			j := j + 1;
+		EXIT WHEN j = 4;
+
+			INSERT INTO post_tags(post_id
+					,tag_id
+					)
+			VALUES (postId
+				,j
+				);
+
+		END LOOP;
+		
+		j := 0;
+		
+		LOOP
+			j := j + 1;
+		EXIT WHEN j = 11;
+
+			INSERT INTO post_coments(post_id
+					,coment_id
+					)
+			VALUES (postId
+				,j
+				);
+
+		END LOOP;		
+	
+	END LOOP;
+
+END
+$$
+LANGUAGE plpgsql;
+
+SELECT "insere_dados"();
