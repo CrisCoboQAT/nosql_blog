@@ -2,7 +2,7 @@
 
 <html>
   <head>
-    <title>Sign Up</title>
+    <title>Cadastrar</title>
     <style type="text/css">
       .label {text-align: right}
       .error {color: red}
@@ -10,17 +10,19 @@
 
   </head>
 
-  <body>
-    Already a user? <a href="/login">Login</a><p>
-    <h2>Signup</h2>
+  <body style="background-color: thistle;">
+    Ja esta cadastrado? <a href="/login">Entrar</a><p>
+    <div style="position: absolute; width: 80%;">
+	<div style="margin-right: 10px; margin-left: 10px; position: relative;">
+    <h1 style="font-size: 45px;">Cadastrar</h1>
     <form method="post">
-      <table>
+      <table style="font-size: 30px;">
         <tr>
           <td class="label">
-            Username
+            Usuario
           </td>
           <td>
-            <input type="text" name="username" value="${username}">
+            <input type="text" name="username" value="${username}" style="height:20px; width:200px; font-size:20px;>
           </td>
           <td class="error">
 	    ${username_error!""}
@@ -30,10 +32,10 @@
 
         <tr>
           <td class="label">
-            Password
+            Senha
           </td>
           <td>
-            <input type="password" name="password" value="">
+            <input type="password" name="password" value="" style="height:20px; width:200px; font-size:20px;>
           </td>
           <td class="error">
 	    ${password_error!""}
@@ -43,10 +45,10 @@
 
         <tr>
           <td class="label">
-            Verify Password
+            Confirmar Senha
           </td>
           <td>
-            <input type="password" name="verify" value="">
+            <input type="password" name="verify" value="" style="height:20px; width:200px; font-size:20px;>
           </td>
           <td class="error">
 	    ${verify_error!""}
@@ -56,10 +58,10 @@
 
         <tr>
           <td class="label">
-            Email (optional)
+            Email (opcional)
           </td>
           <td>
-            <input type="text" name="email" value="${email}">
+            <input type="text" name="email" value="${email}" style="height:20px; width:300px; font-size:20px;>
           </td>
           <td class="error">
 	    ${email_error!""}
@@ -67,9 +69,11 @@
           </td>
         </tr>
       </table>
-
-      <input type="submit" value="Submit">
+	  </br>
+      <input type="submit" value="Salvar" style="margin-left: 39%; margin-bottom: 10%; height: 35px; width: 100px; font-size: 20px;">
     </form>
+    </div>
+    </div>
   </body>
 
 </html>

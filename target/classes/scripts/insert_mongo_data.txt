@@ -1,0 +1,35 @@
+use tcc
+var comments = [];
+for (var i = 1; i <= 10; i++) {
+	var comment = new Object();
+	comment.body = "conteudo commentario " + i;
+	comment.email = "autor_comentario" + i + "@email.com";
+	comment.author = "autor comentario " + i;
+	comment.date = new Date();
+	comment.num_likes = 2 * i;
+	comments.push(comment);
+}
+
+var tags = [];
+for (var i = 1; i <= 3; i++) {
+	tags.push("tag" + i);
+}
+
+db.users.insert({
+	"_id" : "Cristiane",
+	"password" : "ET8UP2g/MjlechFSJz8/,884650965",
+	"email" : "cristiane@email.com",
+	"password_history" : [{ "password" : "ET8UP2g/MjlechFSJz8/,884650965", "date" : new Date()}]
+});
+
+for (var i = 1; i <= 10000; i++) {
+
+	db.posts.insert({ 
+		"body" : i + " postagem: a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z a b c d e f g h i j k l m n o p q r s t u v x z", 
+		"author" : "Cristiane", 
+		"title" : "titulo" + i, 
+		"tags" : tags, 
+		"comments" : comments, 
+		"date" : new Date()
+	});
+}
