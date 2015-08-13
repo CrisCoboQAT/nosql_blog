@@ -13,26 +13,14 @@
 	  	  <h2>Mongo Db</h2>
 		  <div id="postByDate">
 		    <h3>Postagens ordenadas por data de insercao</h3>
-		    <!--<p>Execution Success: ${executionSuccessByDate}</p>
-		    <p>Total Docs Examined: ${totalDocsExaminedByDate}</p>
-		    <p>Execution Time Millis: ${executionTimeMillisByDate}</p>
-		    <p>Total Docs Returned: ${totalDocsReturnedByDate}</p>-->
 		    <p>Tempo total de execucao: ${executionTimeMethodByDate}</p>
 		  </div>
 		  <div id="postByBody">
 		    <h3>Postagens que contem uma determinada palavra ("postagem") em seu conteudo</h3>
-		    <!--<p>Execution Success: ${executionSuccessByBody}</p>
-		    <p>Total Docs Examined: ${totalDocsExaminedByBody}</p>
-		    <p>Execution Time Millis: ${executionTimeMillisByBody}</p>
-		    <p>Total Docs Returned: ${totalDocsReturnedByBody}</p> -->
 		    <p>Tempo total de execucao: ${executionTimeMethodByBody}</p>
 		  </div>
 		  <div id="postByCommentedUser">
 		    <h3>Postagens comentadas por um determinado usuario ("autor comentario 1")</h3>
-		    <!--<p>Execution Success: ${executionSuccessByCommentedUser}</p>
-		    <p>Total Docs Examined: ${totalDocsExaminedByCommentedUser}</p>
-		    <p>Execution Time Millis: ${executionTimeMillisByCommentedUser}</p>
-		    <p>Total Docs Returned: ${totalDocsReturnedByCommentedUser}</p>-->
 		    <p>Tempo total de execucao: ${executionTimeMethodByCommentedUser}</p>
 		  </div>
 	 </div>

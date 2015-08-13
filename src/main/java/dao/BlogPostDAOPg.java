@@ -1,28 +1,14 @@
-/*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-package blog;
+package dao;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+
+import model.Comment;
+import model.Post;
+import model.Tag;
 
 public class BlogPostDAOPg
 {
@@ -38,6 +24,7 @@ public class BlogPostDAOPg
 		ResultSet rs =
 				st.executeQuery("SELECT DISTINCT p.post_id, p.titulo, p.conteudo, p.data, u.nome, u.email FROM postagens p INNER JOIN usuarios u ON (u.user_id = p.user_id) INNER JOIN post_coments pc ON (p.post_id = pc.post_id) INNER JOIN comentarios c ON (pc.coment_id = c.coment_id AND c.nome like '%"
 						+ user + "%')");
+
 		List<Post> posts = new ArrayList<Post>();
 		while (rs.next())
 		{
@@ -124,58 +111,6 @@ public class BlogPostDAOPg
 			tags.add(tag);
 		}
 		return tags;
-	}
-
-	public class Post
-	{
-		public Integer postId;
-		public String title;
-		public String body;
-		public Date date;
-		public String author;
-		public String email;
-		public List<Comment> comments;
-		public List<Tag> tags;
-
-		public Post(Integer postId, String title, String body, Date date, String author, String email)
-		{
-			this.postId = postId;
-			this.title = title;
-			this.body = body;
-			this.date = date;
-			this.author = author;
-			this.email = email;
-		}
-	}
-
-	public class Comment
-	{
-		public Integer commentId;
-		public String name;
-		public String comment;
-		public String email;
-		public Date date;
-
-		public Comment(Integer commentId, String name, String comment, String email, Date date)
-		{
-			this.commentId = commentId;
-			this.name = name;
-			this.comment = comment;
-			this.email = email;
-			this.date = date;
-		}
-	}
-
-	public class Tag
-	{
-		public Integer tagId;
-		public String name;
-
-		public Tag(Integer tagId, String name)
-		{
-			this.tagId = tagId;
-			this.name = name;
-		}
 	}
 
 }

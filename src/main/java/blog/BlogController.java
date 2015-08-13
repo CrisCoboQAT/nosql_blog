@@ -22,13 +22,17 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import spark.Request;
 import spark.Response;
 import spark.Route;
+import util.Timer;
 
 import com.mongodb.DB;
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 
+import dao.BlogPostDAO;
+import dao.BlogPostDAOPg;
+import dao.SessionDAO;
+import dao.UserDAO;
 import freemarker.template.Configuration;
 import freemarker.template.SimpleHash;
 import freemarker.template.Template;
@@ -625,25 +629,8 @@ public class BlogController
 			{
 				Timer timer = new Timer();
 
-				DBCursor cursorPostsByDate = blogPostDAO.findByDateDescending();
+				blogPostDAO.findByDateDescending();
 
-				List<DBObject> postsByDate;
-				try
-				{
-					postsByDate = cursorPostsByDate.toArray();
-				}
-				finally
-				{
-					cursorPostsByDate.close();
-				}
-
-				DBObject explain = cursorPostsByDate.explain();
-
-				DBObject executionStatsDate = (DBObject)explain.get("executionStats");
-				root.put("executionSuccessByDate", executionStatsDate.get("executionSuccess").toString());
-				root.put("executionTimeMillisByDate", executionStatsDate.get("executionTimeMillis").toString());
-				root.put("totalDocsExaminedByDate", executionStatsDate.get("totalDocsExamined").toString());
-				root.put("totalDocsReturnedByDate", postsByDate.size());
 				root.put("executionTimeMethodByDate", timer.toString(true));
 
 			}
@@ -652,28 +639,8 @@ public class BlogController
 			{
 				Timer timer = new Timer();
 
-				DBCursor cursorPostsByCommentedUser = blogPostDAO.findByCommentedUser("autor comentario 1");
+				blogPostDAO.findByCommentedUser("autor comentario 1");
 
-				List<DBObject> postsByCommentedUser;
-				try
-				{
-					postsByCommentedUser = cursorPostsByCommentedUser.toArray();
-				}
-				finally
-				{
-					cursorPostsByCommentedUser.close();
-				}
-
-				DBObject explain = cursorPostsByCommentedUser.explain();
-
-				DBObject executionStatsCommentedUser = (DBObject)explain.get("executionStats");
-				root.put("executionSuccessByCommentedUser", executionStatsCommentedUser.get("executionSuccess")
-						.toString());
-				root.put("executionTimeMillisByCommentedUser", executionStatsCommentedUser.get("executionTimeMillis")
-						.toString());
-				root.put("totalDocsExaminedByCommentedUser", executionStatsCommentedUser.get("totalDocsExamined")
-						.toString());
-				root.put("totalDocsReturnedByCommentedUser", postsByCommentedUser.size());
 				root.put("executionTimeMethodByCommentedUser", timer.toString(true));
 			}
 
@@ -681,25 +648,8 @@ public class BlogController
 			{
 				Timer timer = new Timer();
 
-				DBCursor cursorPostsByBody = blogPostDAO.findByBody("postagem");
-				List<DBObject> postsByBody;
-				try
-				{
-					postsByBody = cursorPostsByBody.toArray();
-				}
-				finally
-				{
-					cursorPostsByBody.close();
-				}
+				blogPostDAO.findByBody("postagem");
 
-				DBObject explain = cursorPostsByBody.explain();
-
-				DBObject executionStatsBody = (DBObject)explain.get("executionStats");
-
-				root.put("executionSuccessByBody", executionStatsBody.get("executionSuccess").toString());
-				root.put("executionTimeMillisByBody", executionStatsBody.get("executionTimeMillis").toString());
-				root.put("totalDocsExaminedByBody", executionStatsBody.get("totalDocsExamined").toString());
-				root.put("totalDocsReturnedByBody", postsByBody.size());
 				root.put("executionTimeMethodByBody", timer.toString(true));
 			}
 		});

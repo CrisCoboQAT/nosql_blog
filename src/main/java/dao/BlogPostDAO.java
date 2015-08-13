@@ -1,21 +1,4 @@
-/*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
-package blog;
+package dao;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -59,27 +42,19 @@ public class BlogPostDAO
 
 	public List<DBObject> findByDateDescending(int limit)
 	{
-		List<DBObject> posts;
 		DBCursor cursor = postsCollection.find().sort(new BasicDBObject().append("date", -1)).limit(limit);
-		try
-		{
-			posts = cursor.toArray();
-		}
-		finally
-		{
-			cursor.close();
-		}
-		return posts;
+
+		return convertResult(cursor);
 	}
 
-	public DBCursor findByDateDescending()
+	public List<DBObject> findByDateDescending()
 	{
 		DBCursor cursor = postsCollection.find().sort(new BasicDBObject("date", -1));
 
-		return cursor;
+		return convertResult(cursor);
 	}
 
-	public DBCursor findByBody(String term)
+	public List<DBObject> findByBody(String term)
 	{
 		final Pattern regex = Pattern.compile(term, Pattern.CASE_INSENSITIVE);
 
@@ -87,33 +62,25 @@ public class BlogPostDAO
 
 		DBCursor cursor = postsCollection.find(new BasicDBObject("body", regexExpr));
 
-		return cursor;
+		return convertResult(cursor);
 	}
 
-	public DBCursor findByCommentedUser(String user)
+	public List<DBObject> findByCommentedUser(String user)
 	{
 		BasicDBObject regexExpr = new BasicDBObject("$regex", user);
 
 		DBCursor cursor = postsCollection.find(new BasicDBObject("comments.author", regexExpr));
 
-		return cursor;
+		return convertResult(cursor);
 	}
 
 	public List<DBObject> findByTagDateDescending(final String tag)
 	{
-		List<DBObject> posts;
 		BasicDBObject query = new BasicDBObject("tags", tag);
-		System.out.println("/tag query: " + query.toString());
+
 		DBCursor cursor = postsCollection.find(query).sort(new BasicDBObject().append("date", -1)).limit(10);
-		try
-		{
-			posts = cursor.toArray();
-		}
-		finally
-		{
-			cursor.close();
-		}
-		return posts;
+
+		return convertResult(cursor);
 	}
 
 	public String addPost(String title, String body, List tags, String username)
@@ -139,8 +106,6 @@ public class BlogPostDAO
 			return null;
 		}
 
-		System.out.println("************" + post.get("_id"));
-
 		return post.get("_id").toString();
 	}
 
@@ -158,8 +123,22 @@ public class BlogPostDAO
 
 	public void likePost(final String id, final int ordinal)
 	{
-
 		postsCollection.update(new BasicDBObject("_id", new ObjectId(id)),
 				new BasicDBObject("$inc", new BasicDBObject("comments." + ordinal + ".num_likes", 1)));
+	}
+
+	private List<DBObject> convertResult(DBCursor cursor)
+	{
+		List<DBObject> posts;
+		try
+		{
+			posts = cursor.toArray();
+		}
+		finally
+		{
+			cursor.close();
+		}
+
+		return posts;
 	}
 }
