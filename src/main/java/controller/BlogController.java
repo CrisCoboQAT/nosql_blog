@@ -1,16 +1,11 @@
-package blog;
+package controller;
 
 import static spark.Spark.get;
 import static spark.Spark.post;
-import static spark.Spark.setPort;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.io.Writer;
-import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,34 +19,16 @@ import spark.Response;
 import spark.Route;
 import util.Timer;
 
-import com.mongodb.DB;
 import com.mongodb.DBObject;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
 
-import dao.BlogPostDAO;
-import dao.BlogPostDAOPg;
-import dao.SessionDAO;
-import dao.UserDAO;
-import freemarker.template.Configuration;
 import freemarker.template.SimpleHash;
-import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
 /**
- * This class encapsulates the controllers for the blog web application. It delegates all interaction with MongoDB
- * to three Data Access Objects (DAOs).
- * <p/>
- * It is also the entry point into the web application.
+ * This class encapsulates the controllers for the blog web application.
  */
-public class BlogController
+public class BlogController extends BaseController
 {
-	private final Configuration cfg;
-	private final BlogPostDAO blogPostDAO;
-	private final UserDAO userDAO;
-	private final SessionDAO sessionDAO;
-	private BlogPostDAOPg blogPostDAOPg;
-
 	public static void main(String[] args) throws IOException, SQLException
 	{
 		if (args.length == 0)
@@ -66,59 +43,8 @@ public class BlogController
 
 	public BlogController(String mongoURIString, String pgURIString) throws IOException, SQLException
 	{
-		// Init mongodb
-		final MongoClient mongoClient = new MongoClient(new MongoClientURI(mongoURIString));
-		final DB blogDatabase = mongoClient.getDB("tcc");
-
-		blogPostDAO = new BlogPostDAO(blogDatabase);
-		userDAO = new UserDAO(blogDatabase);
-		sessionDAO = new SessionDAO(blogDatabase);
-
-		// Init postgres
-		Connection con = DriverManager.getConnection(pgURIString, "postgres", "postgres");
-		Statement st = con.createStatement();
-		blogPostDAOPg = new BlogPostDAOPg(st);
-
-		// Init freemarker
-		cfg = createFreemarkerConfiguration();
-		setPort(8082);
+		super(mongoURIString, pgURIString);
 		initializeRoutes();
-	}
-
-	abstract class FreemarkerBasedRoute extends Route
-	{
-		final Template template;
-
-		/**
-		 * Constructor
-		 * 
-		 * @param path The route path which is used for matching. (e.g. /hello, users/:name)
-		 */
-		protected FreemarkerBasedRoute(final String path, final String templateName) throws IOException
-		{
-			super(path);
-			template = cfg.getTemplate(templateName);
-		}
-
-		@Override
-		public Object handle(Request request, Response response)
-		{
-			StringWriter writer = new StringWriter();
-			try
-			{
-				doHandle(request, response, writer);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-				response.redirect("/internal_error");
-			}
-			return writer;
-		}
-
-		protected abstract void doHandle(final Request request, final Response response, final Writer writer)
-				throws IOException, TemplateException, SQLException;
-
 	}
 
 	private void initializeRoutes() throws IOException
@@ -562,7 +488,7 @@ public class BlogController
 			}
 		});
 
-		// will present the analysis
+		// present the analysis
 		get(new FreemarkerBasedRoute("/analysis", "analysis.ftl")
 		{
 			@Override
@@ -582,184 +508,132 @@ public class BlogController
 				{
 					SimpleHash root = new SimpleHash();
 
-					// Mongo analysis
-					findByDateDescending(root);
-					findByBody(root);
-					findByCommentedUser(root);
-
-					// PG analysis
-					findByDateDescendingPG(root);
-					findByBodyPG(root);
-					findByCommentedUserPG(root);
-
 					root.put("username", username);
 
 					template.process(root, writer);
 				}
 			}
 
-			private void findByBodyPG(SimpleHash root) throws SQLException
+		});
+
+		// used to process internal errors
+		get(new FreemarkerBasedRoute("/internal_error", "error_template.ftl")
+		{
+			@Override
+			protected void doHandle(Request request, Response response, Writer writer) throws IOException,
+					TemplateException
 			{
-				Timer timer = new Timer();
+				SimpleHash root = new SimpleHash();
 
-				blogPostDAOPg.findByBody("postagem");
-
-				root.put("executionTimeMethodByBodyPG", timer.toString(true));
+				root.put("error", "System has encountered an error.");
+				template.process(root, writer);
 			}
+		});
 
-			private void findByCommentedUserPG(SimpleHash root) throws SQLException
-			{
-				Timer timer = new Timer();
-
-				blogPostDAOPg.findByCommentedUser("autor comentario 1");
-
-				root.put("executionTimeMethodByCommentedUserPG", timer.toString(true));
-			}
-
-			private void findByDateDescendingPG(SimpleHash root) throws SQLException
-			{
-				Timer timer = new Timer();
-
-				blogPostDAOPg.findByDateDescending();
-
-				root.put("executionTimeMethodByDatePG", timer.toString(true));
-			}
-
-			private void findByDateDescending(SimpleHash root)
+		// return the execution time to find by date on MongoDB
+		post(new Route("/byDateMongo")
+		{
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
 				Timer timer = new Timer();
 
 				blogPostDAO.findByDateDescending();
 
-				root.put("executionTimeMethodByDate", timer.toString(true));
-
+				return timer.toString(true);
 			}
+		});
 
-			private void findByCommentedUser(SimpleHash root)
-			{
-				Timer timer = new Timer();
-
-				blogPostDAO.findByCommentedUser("autor comentario 1");
-
-				root.put("executionTimeMethodByCommentedUser", timer.toString(true));
-			}
-
-			private void findByBody(SimpleHash root)
+		// return the execution time to find by body on MongoDB
+		post(new Route("/byBodyMongo")
+		{
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
 				Timer timer = new Timer();
 
 				blogPostDAO.findByBody("postagem");
 
-				root.put("executionTimeMethodByBody", timer.toString(true));
+				return timer.toString(true);
 			}
 		});
-	}
 
-	// helper function to get session cookie as string
-	private String getSessionCookie(final Request request)
-	{
-		if (request.raw().getCookies() == null)
+		// return the execution time to find by commented user on MongoDB
+		post(new Route("/byCommentedUserMongo")
 		{
-			return null;
-		}
-		for (Cookie cookie : request.raw().getCookies())
-		{
-			if (cookie.getName().equals("session"))
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
-				return cookie.getValue();
-			}
-		}
-		return null;
-	}
+				Timer timer = new Timer();
 
-	// helper function to get session cookie as string
-	private Cookie getSessionCookieActual(final Request request)
-	{
-		if (request.raw().getCookies() == null)
+				blogPostDAO.findByCommentedUser("autor comentario 1");
+
+				return timer.toString(true);
+			}
+		});
+
+		// return the execution time to find by date on PostgreSQL
+		post(new Route("/byDatePg")
 		{
-			return null;
-		}
-		for (Cookie cookie : request.raw().getCookies())
-		{
-			if (cookie.getName().equals("session"))
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
-				return cookie;
+				Timer timer = new Timer();
+
+				try
+				{
+					blogPostDAOPg.findByDateDescending();
+				}
+				catch (SQLException e)
+				{
+					e.printStackTrace();
+				}
+
+				return timer.toString(true);
 			}
-		}
-		return null;
-	}
+		});
 
-	// tags the tags string and put it into an array
-	private ArrayList<String> extractTags(String tags)
-	{
-
-		// probably more efficent ways to do this.
-		//
-		// whitespace = re.compile('\s')
-
-		tags = tags.replaceAll("\\s", "");
-		String tagArray[] = tags.split(",");
-
-		// let's clean it up, removing the empty string and removing dups
-		ArrayList<String> cleaned = new ArrayList<String>();
-		for (String tag : tagArray)
+		// return the execution time to find by body on PostgreSQL
+		post(new Route("/byBodyPg")
 		{
-			if (!tag.equals("") && !cleaned.contains(tag))
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
-				cleaned.add(tag);
+				Timer timer = new Timer();
+
+				try
+				{
+					blogPostDAOPg.findByBody("postagem");
+				}
+				catch (SQLException e)
+				{
+					e.printStackTrace();
+				}
+
+				return timer.toString(true);
 			}
-		}
+		});
 
-		return cleaned;
-	}
-
-	// validates that the registration form has been filled out right and username conforms
-	public boolean validateSignup(String username, String password, String verify, String email,
-			HashMap<String, String> errors)
-	{
-		String USER_RE = "^[a-zA-Z0-9_-]{3,20}$";
-		String PASS_RE = "^.{3,20}$";
-		String EMAIL_RE = "^[\\S]+@[\\S]+\\.[\\S]+$";
-
-		errors.put("username_error", "");
-		errors.put("password_error", "");
-		errors.put("verify_error", "");
-		errors.put("email_error", "");
-
-		if (!username.matches(USER_RE))
+		// return the execution time to find by commented user on PostgreSQL
+		post(new Route("/byCommentedUserPg")
 		{
-			errors.put("username_error", "invalid username. try just letters and numbers");
-			return false;
-		}
-
-		if (!password.matches(PASS_RE))
-		{
-			errors.put("password_error", "invalid password.");
-			return false;
-		}
-
-		if (!password.equals(verify))
-		{
-			errors.put("verify_error", "password must match");
-			return false;
-		}
-
-		if (!email.equals(""))
-		{
-			if (!email.matches(EMAIL_RE))
+			@Override
+			public Object handle(Request arg0, Response arg1)
 			{
-				errors.put("email_error", "Invalid Email Address");
-				return false;
+				Timer timer = new Timer();
+
+				try
+				{
+					blogPostDAOPg.findByCommentedUser("autor comentario 1");
+				}
+				catch (SQLException e)
+				{
+					e.printStackTrace();
+				}
+
+				return timer.toString(true);
 			}
-		}
+		});
 
-		return true;
-	}
-
-	private Configuration createFreemarkerConfiguration()
-	{
-		Configuration retVal = new Configuration();
-		retVal.setClassForTemplateLoading(BlogController.class, "/freemarker");
-		return retVal;
 	}
 }
